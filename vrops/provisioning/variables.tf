@@ -10,10 +10,10 @@ variable "ami_id" {                   # AMI ID
 
 variable "cluster_size" {              # Flavor T-shirt compute size
   type = string
-  default="extrasmall"
+  default="t2.micro"
 }
 
-variable "podFQDNName" {              # POD FQDN Group Name
+variable "pod_fqdn_name" {              # POD FQDN Group Name
   type = string
 }
 
@@ -36,34 +36,40 @@ variable "node_count" {            # Node Count
 
 variable "sc_environment" {            # SC_Environment
   type    = string
+  default = "sc_env"
 
 }
 
 variable "pool_instance_id" {            # Pool Instance Id
   type    = string
+  default = "sc_env"
 
 }
 
 variable "resource_id" {            # Resource Id 
   type    = string
+  default = "sc_env"
 
 }
 
 variable "admin_password" {            # Admin Password
   type    = string
+  default = "sc_env"
 
 }
 
 variable "availability_zones" {            # Availability zone
   type    = string
+  default = "sc_env"
 
 }
 
 variable "witness_availability_zone" {            # Witness Availability zone 
   type    = string
+  default = "sc_env"
 }
 
-var "vpc_id" {
+variable "vpc_id" {
   type = map 
   default = {
     "dev" = "vpc-02608d56dec071559"
@@ -71,3 +77,68 @@ var "vpc_id" {
     "prod" = ""
   }
 }
+
+variable "tcp_ports" {
+  description = "tcp ports for security group"
+  type        = list(number)
+  default     = [ 22, 80, 5432, 8080, 7001, 6061, 8888, 10000, 9042, 5433 ,443, 12016]
+}
+
+variable "udp_ports" {
+  description = "udp ports for security group"
+  type        = list(string)
+  default     = ["10002-10010", "8888", "20002-20010"]
+}
+
+variable "gw_tcp_ports" {
+  description = "gw_tcp_ports for security group"
+  type        = list(string)
+  default     = ["80", "8080", "443"]
+}
+
+variable "sc_tcp_ports" {
+  description = "sc_tcp_ports for security group"
+  type        = list(string)
+  default     = ["80", "8080", "443"]
+}
+
+variable "oc_tcp_ports" {
+  description = "oc_tcp_ports for security group"
+  type        = list(string)
+  default     = ["22","80", "8080", "443"]
+}
+
+variable "jenkins_ssm_ports" {
+  description = "jenkins_ssm_ports for security group"
+  type        = list(string)
+  default     = ["22", "80", "443"]
+}
+
+variable "xcenter_ports" {
+  description = "xcenter_ports for security group"
+  type        = list(string)
+  default     = ["22", "80", "443"]
+}
+
+variable "ovpn_ports" {
+  description = "ovpn_ports for security group"
+  type        = list(string)
+  default     = ["22", "80", "443"]
+}
+
+variable "vrops_sre_org_ports" {
+  description = "vrops_sre_org_ports for security group"
+  type        = list(string)
+  default     = ["80", "443"]
+}
+
+variable "ssh_port" {              
+  type    = string
+  default = "22"
+}
+
+variable "internet_allowed_ports" {              
+  type    = string
+  default = "443"
+}
+
