@@ -61,4 +61,13 @@ variable "availability_zones" {            # Availability zone
 
 variable "witness_availability_zone" {            # Witness Availability zone 
   type    = string
+}
 
+var "vpc_id" {
+  type = map 
+  default = {
+    "dev" = "vpc-02608d56dec071559"
+    "stage" = ""
+    "prod" = ""
+  }
+}
