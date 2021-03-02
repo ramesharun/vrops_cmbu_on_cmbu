@@ -1,38 +1,64 @@
-variable "awsSgName" {              # Security Group Name
+variable "env" {                      # POD FQDN Group Name
+  type = string
+  default="dev"
+}
+
+variable "ami_id" {                   # AMI ID
+  type = string
+  default="ami-0a36eb8fadc976275"
+}
+
+variable "cluster_size" {              # Flavor T-shirt compute size
+  type = string
+  default="extrasmall"
+}
+
+variable "podFQDNName" {              # POD FQDN Group Name
   type = string
 }
 
-variable "awsSgTagOwner" {          # Security Group Tag "Owner" value
-  type = string
+variable "ha_enabled" {            # HA Enabled Flag
+  default = false                  # 
 }
 
-variable "awsProviderRegion" {      # AWS Provider Region 
-  type = string
+variable "ca_enabled" {            # CA Enabled Flag
+  default = false                # 
 }
 
-variable "awsVpcId" {               # AWS VPC Id
-  type = string
+variable "pendo_enabled" {            # Pendo Enabled Flag
+  default = false                # 
 }
 
-variable "awsInstanceId1" {         # Machine Resource 1 Instance Id(s)
+variable "node_count" {            # Node Count
   type    = string
-  default = ""                      # Account for when instnaces is not passed.
+  default = "1"                    # 
 }
 
-variable "awsInstanceId2" {         # Machine Resource 2 Instance Id(s)
+variable "sc_environment" {            # SC_Environment
   type    = string
-  default = ""                      # Account for when instnaces is not passed. 
+
 }
 
-variable "awsInstanceId3" {         # Machine Resource 3 Instance Id(s)
+variable "pool_instance_id" {            # Pool Instance Id
   type    = string
-  default = ""                      # Account for when instnaces is not passed. 
+
 }
 
-variable "awsSgIngressRules" {      # AWS Security Group Ingress Rules
-  type = string
+variable "resource_id" {            # Resource Id 
+  type    = string
+
 }
 
-variable "awsSgEgressRules" {       # AWS Security Group Egress Rules
-  type = string
+variable "admin_password" {            # Admin Password
+  type    = string
+
 }
+
+variable "availability_zones" {            # Availability zone
+  type    = string
+
+}
+
+variable "witness_availability_zone" {            # Witness Availability zone 
+  type    = string
+
