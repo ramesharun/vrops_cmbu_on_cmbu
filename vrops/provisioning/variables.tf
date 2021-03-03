@@ -86,59 +86,60 @@ variable "tcp_ports" {
 
 variable "udp_ports" {
   description = "udp ports for security group"
-  type        = list(string)
-  default     = ["10002-10010", "8888", "20002-20010"]
+  type        = list(number)
+  default     = [8888]
 }
 
 variable "gw_tcp_ports" {
   description = "gw_tcp_ports for security group"
-  type        = list(string)
-  default     = ["80", "8080", "443"]
+  type        = list(number)
+  default     = [80, 8080, 443]
 }
 
 variable "sc_tcp_ports" {
   description = "sc_tcp_ports for security group"
-  type        = list(string)
-  default     = ["80", "8080", "443"]
+  type        = list(number)
+  default     = [80, 8080, 443]
 }
 
 variable "oc_tcp_ports" {
   description = "oc_tcp_ports for security group"
-  type        = list(string)
+  type        = list(number)
   default     = ["22","80", "8080", "443"]
 }
 
 variable "jenkins_ssm_ports" {
   description = "jenkins_ssm_ports for security group"
-  type        = list(string)
-  default     = ["22", "80", "443"]
+  type        = list(number)
+  default     = [22, 80, 443]
 }
 
 variable "xcenter_ports" {
   description = "xcenter_ports for security group"
-  type        = list(string)
-  default     = ["22", "80", "443"]
+  type        = list(number)
+  default     = [22, 80, 443]
 }
 
 variable "ovpn_ports" {
   description = "ovpn_ports for security group"
-  type        = list(string)
-  default     = ["22", "80", "443"]
+  type        = list(number)
+  default     = [22, 80, 443]
 }
 
 variable "vrops_sre_org_ports" {
   description = "vrops_sre_org_ports for security group"
-  type        = list(string)
-  default     = ["80", "443"]
+  type        = list(number)
+  default     = [80, 443]
 }
 
-variable "ssh_port" {              
-  type    = string
-  default = "22"
+variable "range_from_tcp_ports" {
+  description = "tcp ports for security group"
+  type        = list(number)
+  default     = [10002,20002]
 }
 
-variable "internet_allowed_ports" {              
-  type    = string
-  default = "443"
+variable "range_to_tcp_ports" {
+  description = "tcp ports for security group"
+  type        = list(number)
+  default     = [10010,20010]
 }
-
