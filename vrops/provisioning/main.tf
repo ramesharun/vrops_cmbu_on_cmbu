@@ -8,6 +8,7 @@ locals {
     to_range_1 = 10010
     to_range_2 = 20010  
   }
+
 }
 
 data "aws_security_groups" "vrops-sc-sg" {
@@ -89,6 +90,23 @@ data "aws_security_groups" "eso-ovpn-pub" {
     values = ["eso-ovpn-pub"]
   }
 }
+
+data "aws_subnet_ids" "example" {
+  vpc_id = lookup(var.vpc_id,var.env)
+  tags = {
+    Name ="*trusted-platform-${var.availability_zones}"
+   
+  }
+}
+
+data "aws_subnet" subnet {
+  for_each = data.aws_subnet_ids.example.ids
+  id = each.value
+}
+
+output "aws_subnet_id" {
+   value = element(tolist(data.aws_subnet_ids.example.ids),0)
+ }
 
 resource "aws_security_group" "vrops-sg" {
   name        = "vrops-SG-${var.pod_fqdn_name}"                                        
@@ -239,5 +257,35 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sre-sg.ids[0]                          
 }
+
+ resource "aws_instance" "vrops-node" {
+      count = var.node_count
+      ami = var.ami_id
+      instance_type = lookup(var.instance_size,var.cluster_size) 
+      subnet_id = element(tolist(data.aws_subnet_ids.example.ids),0)
+      vpc_security_group_ids = [aws_security_group.vrops-sg.id]
+      iam_instance_profile = "vrops.app.profile"
+      key_name = var.ssh_key_name
+      user_data = file("${path.module}/scripts/cloudInit.sh")
+      ebs_block_device {
+        device_name = "/dev/sdb"
+        volume_size = lookup(var.disk_size,var.cluster_size) 
+        volume_type = "gp2"
+        delete_on_termination = true
+      }
+      ebs_block_device {
+        device_name = "/dev/sdc"
+        volume_size = 8
+        volume_type = "gp2"
+        delete_on_termination = true
+       }
+       ebs_optimized = true
+
+       tags = {
+          product = "vrops"
+          role = "app"
+       }
+
+  }
 
 
