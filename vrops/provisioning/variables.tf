@@ -10,7 +10,7 @@ variable "ami_id" {                   # AMI ID
 
 variable "cluster_size" {              # Flavor T-shirt compute size
   type = string
-  default="t2.micro"
+  default="extrasmall"
 }
 
 variable "pod_fqdn_name" {              # POD FQDN Group Name
@@ -30,8 +30,8 @@ variable "pendo_enabled" {            # Pendo Enabled Flag
 }
 
 variable "node_count" {            # Node Count
-  type    = string
-  default = "1"                    # 
+  type    = number
+  default = 1                   # 
 }
 
 variable "sc_environment" {            # SC_Environment
@@ -60,7 +60,7 @@ variable "admin_password" {            # Admin Password
 
 variable "availability_zones" {            # Availability zone
   type    = string
-  default = "sc_env"
+  default = "us-west-2a"
 
 }
 
@@ -75,6 +75,28 @@ variable "vpc_id" {
     "dev" = "vpc-02608d56dec071559"
     "stage" = ""
     "prod" = ""
+  }
+}
+
+variable "instance_size" {
+  type = map 
+  default = {
+    "extrasmall" = "m5.large"
+    "small" = "m5.xlarge"
+    "medium" = "m5.2xlarge"
+    "large" = "m5.4xlarge"
+    "extralarge" = "m5.8xlarge"
+  }
+}
+
+variable "disk_size" {
+  type = map 
+  default = {
+    "extrasmall" = 250
+    "small" = 300
+    "medium" = 600
+    "large" = 1200
+    "extralarge" = 1200
   }
 }
 
@@ -143,3 +165,11 @@ variable "range_to_tcp_ports" {
   type        = list(number)
   default     = [10010,20010]
 }
+
+variable "ssh_key_name" {
+  description = "ssh key pair"
+  type = string
+  default = "vropskey"
+}
+
+
