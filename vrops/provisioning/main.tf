@@ -11,6 +11,14 @@ locals {
 
 }
 
+locals {
+  timestamp = "${timestamp()}"
+  elb_postfix = "${replace("${local.timestamp}", "/[- TZ:]/", "")}"
+  elb_prefix = "vrops"
+  elb_middle = element(split(".",var.pod_fqdn_name),0)
+  elb_name = join("-",[local.elb_prefix,local.elb_middle,local.elb_postfix])
+}
+
 data "aws_security_groups" "vrops-sc-sg" {
   filter {
     name   = "group-name"
@@ -91,7 +99,7 @@ data "aws_security_groups" "eso-ovpn-pub" {
   }
 }
 
-data "aws_subnet_ids" "example" {
+data "aws_subnet_ids" "az_subnets" {
   vpc_id = lookup(var.vpc_id,var.env)
   tags = {
     Name ="*trusted-platform-${var.availability_zones}"
@@ -99,14 +107,18 @@ data "aws_subnet_ids" "example" {
   }
 }
 
+data "aws_subnet_ids" "all_subnets" {
+  vpc_id = lookup(var.vpc_id,var.env)
+  tags = {
+    Name ="*trusted-platform-*"
+  }
+}
+
 data "aws_subnet" subnet {
-  for_each = data.aws_subnet_ids.example.ids
+  for_each = data.aws_subnet_ids.az_subnets.ids
   id = each.value
 }
 
-output "aws_subnet_id" {
-   value = element(tolist(data.aws_subnet_ids.example.ids),0)
- }
 
 resource "aws_security_group" "vrops-sg" {
   name        = "vrops-SG-${var.pod_fqdn_name}"                                        
@@ -262,7 +274,7 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       count = var.node_count
       ami = var.ami_id
       instance_type = lookup(var.instance_size,var.cluster_size) 
-      subnet_id = element(tolist(data.aws_subnet_ids.example.ids),0)
+      subnet_id = element(tolist(data.aws_subnet_ids.az_subnets.ids),0)
       vpc_security_group_ids = [aws_security_group.vrops-sg.id]
       iam_instance_profile = "vrops.app.profile"
       key_name = var.ssh_key_name
@@ -287,5 +299,71 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
        }
 
   }
+
+  # Create a new load balancer
+  resource "aws_elb" "vrops_elb" {
+    name               = local.elb_name
+    subnets = tolist(data.aws_subnet_ids.all_subnets.ids)
+
+    listener {
+      instance_port     = 80
+      instance_protocol = "http"
+      lb_port           = 80
+      lb_protocol       = "http"
+    }
+
+    listener {
+      instance_port      = 443
+      instance_protocol  = "https"
+      lb_port            = 443
+      lb_protocol        = "https"
+      ssl_certificate_id = var.ssh_arn
+    }
+
+    health_check {
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+      timeout             = 3
+      target              = "HTTPS:443/suite-api/api/deployment/node/status?services=api&services=adminui&services=ui"
+      interval            = 30
+    }
+
+    instances             = tolist(aws_instance.vrops-node.*.id)
+    idle_timeout          = 410
+    security_groups       = [aws_security_group.vrops-sg.id]
+    internal              = true
+
+    tags = {
+      product = "vrops"
+        role = "app"
+        sc_environment = var.sc_environment
+    }
+  }
+
+  resource "aws_app_cookie_stickiness_policy" "appcookiepolicy" {
+  name          = "vrops-app-cookie-policy"
+  load_balancer = aws_elb.vrops_elb.name
+  lb_port       = 80
+  cookie_name   = "JSESSIONID"
+ }
+
+  resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-443" {
+  load_balancer_name = aws_elb.vrops_elb.name
+  load_balancer_port = 443
+
+  policy_names = [
+   aws_app_cookie_stickiness_policy.appcookiepolicy.name,
+  ]
+}
+
+resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-80" {
+  load_balancer_name = aws_elb.vrops_elb.name
+  load_balancer_port = 80
+
+  policy_names = [
+    aws_app_cookie_stickiness_policy.appcookiepolicy.name,
+  ]
+}
+
 
 
