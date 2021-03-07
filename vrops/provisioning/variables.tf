@@ -173,3 +173,14 @@ variable "ssh_key_name" {
 }
 
 
+variable "ssh_arn" {
+  description = "ssh arn"
+  type = string
+  default = "arn:aws:acm:us-west-2:000954396075:certificate/7a6ae625-841e-4a6c-b3b1-8fde058e8439"
+}
+
+variable "dns_record_type" {
+  description = "dns record type"
+  type = string
+  default = "A"
+}
