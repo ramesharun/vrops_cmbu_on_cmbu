@@ -30,7 +30,6 @@ data "aws_security_groups" "vrops-sc-sg" {
     values = [lookup(var.vpc_id,var.env)]
   }
 }
-
 data "aws_security_groups" "vrops-gw-sg" {
   filter {
     name   = "group-name"
@@ -42,7 +41,6 @@ data "aws_security_groups" "vrops-gw-sg" {
     values = [lookup(var.vpc_id,var.env)  ]
   }
 }
-
 data "aws_security_groups" "vrops-oc-sg" {
   filter {
     name   = "group-name"
@@ -54,8 +52,6 @@ data "aws_security_groups" "vrops-oc-sg" {
     values = [lookup(var.vpc_id,var.env)  ]
   }
 }
-
-
 data "aws_security_groups" "ssmagent-worker-sg" {
   filter {
     name   = "group-name"
@@ -92,6 +88,10 @@ data "aws_security_groups" "vrops-sre-sg" {
   }
 }
 
+data "aws_route53_zone" "vrops" {
+  name         = "${var.hosted_zone}"
+}
+
 data "aws_security_groups" "eso-ovpn-pub" {
   filter {
     name   = "group-name"
@@ -118,7 +118,6 @@ data "aws_subnet" subnet {
   for_each = data.aws_subnet_ids.az_subnets.ids
   id = each.value
 }
-
 
 resource "aws_security_group" "vrops-sg" {
   name        = "vrops-SG-${var.pod_fqdn_name}"                                        
@@ -149,7 +148,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_self" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                           
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_self_range_1" {  
       from_port = local.port_ranges.from_range_1
       to_port =  local.port_ranges.to_range_1 
@@ -158,7 +156,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_self_range_1" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                     
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_self_range_2" {  
       from_port = local.port_ranges.from_range_2
       to_port =  local.port_ranges.to_range_2 
@@ -167,7 +164,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_self_range_2" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                     
 }
-
 resource "aws_security_group_rule" "ingress_rules_udp_self" {  
       count = length(var.udp_ports)
       from_port = var.udp_ports[count.index]
@@ -177,7 +173,6 @@ resource "aws_security_group_rule" "ingress_rules_udp_self" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                           
 }
-
 resource "aws_security_group_rule" "ingress_rules_udp_self_range_1" {  
       from_port = local.port_ranges.from_range_1
       to_port =  local.port_ranges.to_range_1 
@@ -186,7 +181,6 @@ resource "aws_security_group_rule" "ingress_rules_udp_self_range_1" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                     
 }
-
 resource "aws_security_group_rule" "ingress_rules_udp_self_range_2" {  
       from_port = local.port_ranges.from_range_2
       to_port =  local.port_ranges.to_range_2 
@@ -195,7 +189,6 @@ resource "aws_security_group_rule" "ingress_rules_udp_self_range_2" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = aws_security_group.vrops-sg.id                     
 }
-
 resource "aws_security_group_rule" "ingress_rules_gw" {  
       count = length(var.gw_tcp_ports)
       from_port = var.gw_tcp_ports[count.index]
@@ -205,7 +198,6 @@ resource "aws_security_group_rule" "ingress_rules_gw" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-gw-sg.ids[0]
 }
-
 resource "aws_security_group_rule" "ingress_rules_sc" {  
       count = length(var.sc_tcp_ports)
       from_port = var.sc_tcp_ports[count.index]
@@ -215,7 +207,6 @@ resource "aws_security_group_rule" "ingress_rules_sc" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sc-sg.ids[0]
 }
-
 resource "aws_security_group_rule" "ingress_rules_oc" {  
       count = length(var.oc_tcp_ports)
       from_port = var.oc_tcp_ports[count.index]
@@ -225,7 +216,6 @@ resource "aws_security_group_rule" "ingress_rules_oc" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-oc-sg.ids[0]
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_jenkins_ssm" {  
       count = length(var.jenkins_ssm_ports)
       from_port = var.jenkins_ssm_ports[count.index]
@@ -236,7 +226,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_jenkins_ssm" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.ssmagent-worker-sg.ids[0]                          
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_xcenter" {  
       count = length(var.xcenter_ports)
       from_port = var.xcenter_ports[count.index]
@@ -247,7 +236,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_xcenter" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.xcenter-ec2-sg.ids[0]                          
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_ovpn" {  
       count = length(var.ovpn_ports)
       from_port = var.ovpn_ports[count.index]
@@ -258,7 +246,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_ovpn" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.eso-ovpn-pub.ids[0]                          
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {  
       count = length(var.vrops_sre_org_ports)
       from_port = var.vrops_sre_org_ports[count.index]
@@ -269,7 +256,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sre-sg.ids[0]                          
 }
-
  resource "aws_instance" "vrops-node" {
       count = var.node_count
       ami = var.ami_id
@@ -346,8 +332,7 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
   lb_port       = 80
   cookie_name   = "JSESSIONID"
  }
-
-  resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-443" {
+ resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-443" {
   load_balancer_name = aws_elb.vrops_elb.name
   load_balancer_port = 443
 
@@ -355,7 +340,6 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
    aws_app_cookie_stickiness_policy.appcookiepolicy.name,
   ]
 }
-
 resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-80" {
   load_balancer_name = aws_elb.vrops_elb.name
   load_balancer_port = 80
@@ -364,6 +348,15 @@ resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-80" {
     aws_app_cookie_stickiness_policy.appcookiepolicy.name,
   ]
 }
-
+resource "aws_route53_record" "dnsrecord" {
+  zone_id = data.aws_route53_zone.vrops.id
+  name    = var.pod_fqdn_name
+  type    = var.dns_record_type
+  alias {
+    name                   = aws_elb.vrops_elb.dns_name
+    zone_id                = aws_elb.vrops_elb.zone_id
+    evaluate_target_health = true
+    }  
+}
 
 
