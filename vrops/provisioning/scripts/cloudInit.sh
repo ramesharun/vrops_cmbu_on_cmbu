@@ -8,6 +8,15 @@ touch /opt/vmware/deployed_on_saas.sh
 chmod 755 /opt/vmware/deployed_on_saas.sh
 echo "export IS_SAAS=true" >> /opt/vmware/deployed_on_saas.sh
 cat /opt/vmware/deployed_on_saas.sh
-
 # Set VAMI hostname
 #/opt/vmware/share/vami/vami_set_hostname
+echo "Installing Amazon SSM Agent on $(hostname)"
+
+url="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm"
+file_path="/tmp/amazon-ssm-agent.rpm"
+curl ${url} -o ${file_path}
+rpm -ivh --replacepkgs ${file_path}
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
+rm ${file_path}
+echo "Amazon SSM Agent successfully installed $(hostname)"
