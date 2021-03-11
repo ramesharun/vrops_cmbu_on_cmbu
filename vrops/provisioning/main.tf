@@ -19,116 +19,23 @@ locals {
   elb_name = join("-",[local.elb_prefix,local.elb_middle,local.elb_postfix])
 }
 
-data "aws_security_groups" "vrops-sc-sg" {
-  filter {
-    name   = "group-name"
-    values = ["vrops-sc-sg"]
-  }
+locals {
 
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)]
-  }
-}
-data "aws_security_groups" "vrops-gw-sg" {
-  filter {
-    name   = "group-name"
-    values = ["vrops-gw-sg"]
-  }
+    sleeptime = "1800s"
 
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)  ]
-  }
-}
-data "aws_security_groups" "vrops-oc-sg" {
-  filter {
-    name   = "group-name"
-    values = ["vrops-oc-sg"]
-  }
-
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)  ]
-  }
-}
-data "aws_security_groups" "ssmagent-worker-sg" {
-  filter {
-    name   = "group-name"
-    values = ["ssmagent-worker-sg"]
-  }
-
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)  ]
-  }
 }
 
-data "aws_security_groups" "xcenter-ec2-sg" {
-  filter {
-    name   = "group-name"
-    values = ["xcenter-ec2-sg"]
-  }
-
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)  ]
-  }
-}
-
-data "aws_security_groups" "vrops-sre-sg" {
-  filter {
-    name   = "group-name"
-    values = ["vrops-sre-sg"]
-  }
-
-  filter {
-    name   = "vpc-id"
-    values = [lookup(var.vpc_id,var.env)  ]
-  }
-}
-
-data "aws_route53_zone" "vrops" {
-  name         = "${var.hosted_zone}"
-}
-
-data "aws_security_groups" "eso-ovpn-pub" {
-  filter {
-    name   = "group-name"
-    values = ["eso-ovpn-pub"]
-  }
-}
-
-data "aws_subnet_ids" "az_subnets" {
-  vpc_id = lookup(var.vpc_id,var.env)
-  tags = {
-    Name ="*trusted-platform-${var.availability_zones}"
-   
-  }
-}
-
-data "aws_subnet_ids" "all_subnets" {
-  vpc_id = lookup(var.vpc_id,var.env)
-  tags = {
-    Name ="*trusted-platform-*"
-  }
-}
-
-data "aws_subnet" subnet {
-  for_each = data.aws_subnet_ids.az_subnets.ids
-  id = each.value
-}
-
+# Create Network Isolation - Security Groups
 resource "aws_security_group" "vrops-sg" {
   name        = "vrops-SG-${var.pod_fqdn_name}"                                        
   vpc_id      = lookup(var.vpc_id,var.env)                                                             
   description = "vrops security group"
 
-  tags = {                                                                               
-    service_name  = "VROPS",
-    product = "vrops",
-    cluster = "vrops-saas",
-    Name = "vrops-SG-${var.pod_fqdn_name}"
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
   
   egress {
@@ -137,7 +44,15 @@ resource "aws_security_group" "vrops-sg" {
       protocol = "-1"
       cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {                                                                               
+    service_name  = "VROPS",
+    product = "vrops",
+    cluster = "vrops-saas",
+    Name = "vrops-SG-${var.pod_fqdn_name}"
+  }
 }
+# Create Ingress Rules
 resource "aws_security_group_rule" "ingress_rules_tcp_self" {  
       count = length(var.tcp_ports)
       from_port = var.tcp_ports[count.index]
@@ -256,7 +171,8 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sre-sg.ids[0]                          
 }
- resource "aws_instance" "vrops-node" {
+# Create vrops Instances
+resource "aws_instance" "vrops-node" {
       count = var.node_count
       ami = var.ami_id
       instance_type = lookup(var.instance_size,var.cluster_size) 
@@ -277,17 +193,28 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
         volume_type = "gp2"
         delete_on_termination = true
        }
-       ebs_optimized = true
+      ebs_optimized = true
+      metadata_options {
+        http_endpoint = "enabled"
+        http_tokens   = "required"
 
-       tags = {
+      }
+      tags = {
           product = "vrops"
           role = "app"
-       }
+          Name = "VROPS from ami ${var.ami_id}"
+      }
 
+      // provisioner "local-exec" {
+      //   command = "sleep 420"
+      // }
+     
   }
 
-  # Create a new load balancer
-  resource "aws_elb" "vrops_elb" {
+
+
+# Create a new load balancer
+resource "aws_elb" "vrops_elb" {
     name               = local.elb_name
     subnets = tolist(data.aws_subnet_ids.all_subnets.ids)
 
@@ -324,15 +251,14 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
         role = "app"
         sc_environment = var.sc_environment
     }
-  }
-
-  resource "aws_app_cookie_stickiness_policy" "appcookiepolicy" {
+}
+resource "aws_app_cookie_stickiness_policy" "appcookiepolicy" {
   name          = "vrops-app-cookie-policy"
   load_balancer = aws_elb.vrops_elb.name
   lb_port       = 80
   cookie_name   = "JSESSIONID"
- }
- resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-443" {
+}
+resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-443" {
   load_balancer_name = aws_elb.vrops_elb.name
   load_balancer_port = 443
 
@@ -348,6 +274,7 @@ resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-80" {
     aws_app_cookie_stickiness_policy.appcookiepolicy.name,
   ]
 }
+# Create Route 53 Record
 resource "aws_route53_record" "dnsrecord" {
   zone_id = data.aws_route53_zone.vrops.id
   name    = var.pod_fqdn_name
@@ -356,7 +283,9 @@ resource "aws_route53_record" "dnsrecord" {
     name                   = aws_elb.vrops_elb.dns_name
     zone_id                = aws_elb.vrops_elb.zone_id
     evaluate_target_health = true
+    }
+
+    provisioner "local-exec" {
+       command = "sleep 1800"
     }  
 }
-
-
