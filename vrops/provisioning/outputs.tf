@@ -40,6 +40,11 @@ output "sg_revoke_rules_on_delete" {
    value   = tolist(aws_instance.vrops-node.*.id)
  }
 
+ output "aws_instances_private_ips" {
+   description = "AWS instance ids provisioned"
+   value   = tolist(aws_instance.vrops-node.*.private_ip)
+ }
+
 output "aws_az_subnet_id" {
    value = element(tolist(data.aws_subnet_ids.az_subnets.ids),0)
  }
@@ -57,6 +62,5 @@ output "aws_az_subnet_id" {
  }
 
  output "vrops_zone_id"{
-
    value = data.aws_route53_zone.vrops.id
  }
