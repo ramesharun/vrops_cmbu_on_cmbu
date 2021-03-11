@@ -5,7 +5,7 @@ variable "env" {                      # POD FQDN Group Name
 
 variable "ami_id" {                   # AMI ID
   type = string
-  default="ami-0a36eb8fadc976275"
+  default="ami-0d519fd2bc20076b8"
 }
 
 variable "cluster_size" {              # Flavor T-shirt compute size
@@ -54,7 +54,7 @@ variable "resource_id" {            # Resource Id
 
 variable "admin_password" {            # Admin Password
   type    = string
-  default = "sc_env"
+  default = "Admin@123"
 
 }
 
@@ -154,6 +154,11 @@ variable "vrops_sre_org_ports" {
   default     = [80, 443]
 }
 
+variable "internet_allowed_port" {
+  description = "enable traffic to 0.0.0.0/0"
+  type        = number
+  default     = 443
+}
 variable "range_from_tcp_ports" {
   description = "tcp ports for security group"
   type        = list(number)
@@ -171,7 +176,6 @@ variable "ssh_key_name" {
   type = string
   default = "vropskey"
 }
-
 
 variable "ssh_arn" {
   description = "ssh arn"
