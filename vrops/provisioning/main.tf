@@ -1,5 +1,4 @@
 
-
 locals {
 
   port_ranges = {
@@ -10,22 +9,18 @@ locals {
   }
 
 }
-
 locals {
-  timestamp = "${timestamp()}"
-  elb_postfix = "${replace("${local.timestamp}", "/[- TZ:]/", "")}"
+  timestamp = timestamp()
+  elb_postfix = replace(local.timestamp, "/[- TZ:]/", "")
   elb_prefix = "vrops"
   elb_middle = element(split(".",var.pod_fqdn_name),0)
   elb_name = join("-",[local.elb_prefix,local.elb_middle,local.elb_postfix])
 }
-
 locals {
 
     sleeptime = "1800s"
 
 }
-
-# Create Network Isolation - Security Groups
 resource "aws_security_group" "vrops-sg" {
   name        = "vrops-SG-${var.pod_fqdn_name}"                                        
   vpc_id      = lookup(var.vpc_id,var.env)                                                             
@@ -37,14 +32,12 @@ resource "aws_security_group" "vrops-sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  
   egress {
       from_port = 0
       to_port = 0
       protocol = "-1"
       cidr_blocks = ["0.0.0.0/0"]
   }
-
   tags = {                                                                               
     service_name  = "VROPS",
     product = "vrops",
@@ -52,7 +45,7 @@ resource "aws_security_group" "vrops-sg" {
     Name = "vrops-SG-${var.pod_fqdn_name}"
   }
 }
-# Create Ingress Rules
+
 resource "aws_security_group_rule" "ingress_rules_tcp_self" {  
       count = length(var.tcp_ports)
       from_port = var.tcp_ports[count.index]
@@ -171,16 +164,16 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sre-sg.ids[0]                          
 }
-# Create vrops Instances
 resource "aws_instance" "vrops-node" {
-      count = var.node_count
-      ami = var.ami_id
-      instance_type = lookup(var.instance_size,var.cluster_size) 
-      subnet_id = element(tolist(data.aws_subnet_ids.az_subnets.ids),0)
-      vpc_security_group_ids = [aws_security_group.vrops-sg.id]
-      iam_instance_profile = "vrops.app.profile"
-      key_name = var.ssh_key_name
-      user_data = file("${path.module}/scripts/cloudInit.sh")
+      count                   = var.node_count
+      ami                     = var.ami_id
+      instance_type           = lookup(var.instance_size,var.cluster_size) 
+      subnet_id               = element(tolist(data.aws_subnet_ids.az_subnets.ids),0)
+      vpc_security_group_ids  = [aws_security_group.vrops-sg.id]
+      iam_instance_profile    = "vrops.app.profile"
+      key_name                = var.ssh_key_name
+      user_data               = templatefile("${path.module}/scripts/cloudInit.sh", {admin_password=var.admin_password,url=var.ssmagenturl,file_path=var.ssmfilepath,ami_buildtype=data.aws_ami.vrops_ami.tags.BuildType,ami_changelist=data.aws_ami.vrops_ami.tags.Changelist,cp_bucket_base_url=var.cp_bucket_base_url,csp_ref_link=var.csp_ref_link,sre_org_id=var.sre_org_id,base_url=var.base_url,pendo_key=data.aws_secretsmanager_secret_version.pendo_value.secret_string,license_key=var.vra_license_key})
+
       ebs_block_device {
         device_name = "/dev/sdb"
         volume_size = lookup(var.disk_size,var.cluster_size) 
@@ -204,16 +197,8 @@ resource "aws_instance" "vrops-node" {
           role = "app"
           Name = "VROPS from ami ${var.ami_id}"
       }
-
-      // provisioner "local-exec" {
-      //   command = "sleep 420"
-      // }
      
-  }
-
-
-
-# Create a new load balancer
+}
 resource "aws_elb" "vrops_elb" {
     name               = local.elb_name
     subnets = tolist(data.aws_subnet_ids.all_subnets.ids)
@@ -274,7 +259,6 @@ resource "aws_load_balancer_listener_policy" "vrops-elb-listener-policies-80" {
     aws_app_cookie_stickiness_policy.appcookiepolicy.name,
   ]
 }
-# Create Route 53 Record
 resource "aws_route53_record" "dnsrecord" {
   zone_id = data.aws_route53_zone.vrops.id
   name    = var.pod_fqdn_name
@@ -283,9 +267,16 @@ resource "aws_route53_record" "dnsrecord" {
     name                   = aws_elb.vrops_elb.dns_name
     zone_id                = aws_elb.vrops_elb.zone_id
     evaluate_target_health = true
-    }
-
+    }   
+}
+resource "null_resource" "vrops_cluster_config"{
     provisioner "local-exec" {
-       command = "sleep 1800"
+       command = "sleep 1800" 
     }  
 }
+
+
+
+
+
+
