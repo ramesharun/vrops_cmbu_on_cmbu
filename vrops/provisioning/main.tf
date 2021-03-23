@@ -45,7 +45,6 @@ resource "aws_security_group" "vrops-sg" {
     Name = "vrops-SG-${var.pod_fqdn_name}"
   }
 }
-
 resource "aws_security_group_rule" "ingress_rules_tcp_self" {  
       count = length(var.tcp_ports)
       from_port = var.tcp_ports[count.index]
@@ -172,7 +171,7 @@ resource "aws_instance" "vrops-node" {
       vpc_security_group_ids  = [aws_security_group.vrops-sg.id]
       iam_instance_profile    = "vrops.app.profile"
       key_name                = var.ssh_key_name
-      user_data               = templatefile("${path.module}/scripts/cloudInit.sh", {admin_password=var.admin_password,url=var.ssmagenturl,file_path=var.ssmfilepath,ami_buildtype=data.aws_ami.vrops_ami.tags.BuildType,ami_changelist=data.aws_ami.vrops_ami.tags.Changelist,cp_bucket_base_url=var.cp_bucket_base_url,csp_ref_link=var.csp_ref_link,sre_org_id=var.sre_org_id,base_url=var.base_url,pendo_key=data.aws_secretsmanager_secret_version.pendo_value.secret_string,license_key=var.vra_license_key})
+      user_data               = templatefile("${path.module}/scripts/cloudInit.sh", {admin_password=var.admin_password,url=var.ssmagenturl,file_path=var.ssmfilepath,ami_buildtype=data.aws_ami.vrops_ami.tags.BuildType,ami_changelist=data.aws_ami.vrops_ami.tags.Changelist,cp_bucket_base_url=var.cp_bucket_base_url,csp_ref_link=var.csp_ref_link,sre_org_id=var.sre_org_id,base_url=var.base_url,pendo_key=data.aws_secretsmanager_secret_version.pendo_value.secret_string,license_key=var.vra_license_key,seshost=var.seshost,sesusername=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).username,sespassword=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).password,vrli_hostname=var.vrli_hostname,aws_env=var.env,node_type=var.cluster_size,csp_url=var.csp_url,srehub_refreshtoken=var.srehub_refreshtoken,orgId=var.sre_org_id,scurl=var.sc_customer_url})
 
       ebs_block_device {
         device_name = "/dev/sdb"
@@ -271,12 +270,6 @@ resource "aws_route53_record" "dnsrecord" {
 }
 resource "null_resource" "vrops_cluster_config"{
     provisioner "local-exec" {
-       command = "sleep 1800" 
+       command = "sleep 2100" 
     }  
 }
-
-
-
-
-
-
