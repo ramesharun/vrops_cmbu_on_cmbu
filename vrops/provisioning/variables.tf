@@ -192,3 +192,18 @@ variable "marketplace" {
 variable "vra_license_key"{
   default = "FN3A6-J8G10-R8CEQ-0WN0V-XH3W1"
 }
+variable "seshost"{
+  default = "email-smtp.us-west-2.amazonaws.com"
+}
+variable "vrli_hostname"{
+  default = "vrops-dmz.licf.vmware.com"
+}
+variable "csp_url"{
+  default = "https://console-stg.cloud.vmware.com/"
+}
+variable "srehub_refreshtoken"{
+  default = "HamHt6tI5x1aoVRspA77FQ67fOfV7d4E1eOjqG7kUCXmxYuOmJ0yXxsckIgdoath"
+}
+variable "sc_customer_url"{
+  default = "https://api.staging.symphony-dev.com/vrops-dev/saas-controller/internal/tenants/customer-info/"
+}
