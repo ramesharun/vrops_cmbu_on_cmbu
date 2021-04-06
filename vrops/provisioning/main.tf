@@ -199,7 +199,7 @@ resource "aws_instance" "vrops-node" {
      
 }
 resource "aws_elb" "vrops_elb" {
-    name               = local.elb_name
+    name               = length(local.elb_name) > 32 ? substr(local.elb_name,0,31) : local.elb_name
     subnets = tolist(data.aws_subnet_ids.all_subnets.ids)
 
     listener {
