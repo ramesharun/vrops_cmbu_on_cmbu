@@ -22,6 +22,7 @@ rm "${file_path}"
 echo "SSM Agent installed successfully"
 
 echo "AdminPassword       : ${admin_password}"
+echo "Root Password       : ${root_password}"
 echo "AMI BuildType       : ${ami_buildtype}"
 echo "AMI ChangeList      : ${ami_changelist}"
 echo "cp_bucket_base_url  : ${cp_bucket_base_url}"
@@ -72,6 +73,10 @@ aws_az_zone=$(cat $instance_meta_json | awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i
 
 echo "Instance Type : $instance_type | AWS_Region : $aws_region | Availability Zone : $aws_az_zone"
 echo "Amazon SSM Agent successfully installed $(hostname)"
+
+echo "Setting Root Password"
+echo -e "${root_password}\n${root_password}" | sudo passwd root
+echo "Root Password Set Successfully."
 
 echo "Sleeping for 7 minutes"
 sleep 420
