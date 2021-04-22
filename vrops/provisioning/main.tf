@@ -163,6 +163,39 @@ resource "aws_security_group_rule" "ingress_rules_tcp_vrops_sre" {
       security_group_id = aws_security_group.vrops-sg.id
       source_security_group_id = data.aws_security_groups.vrops-sre-sg.ids[0]                          
 }
+resource "random_password" "AdminPassword" {
+  length            = 10
+  special           = true
+  min_special       = 1
+  min_numeric       = 3
+  min_upper         = 2
+  override_special  = "@"
+}
+resource "random_password" "RootPassword" {
+  length           = 10
+  special          = true
+  min_special       = 1
+  min_numeric       = 2
+  min_upper         = 2
+  override_special = "_%@"
+}
+
+resource "aws_secretsmanager_secret" "admin-pass" {
+  name = join("/",[var.sc_environment,"vropsAdminCred",var.pod_fqdn_name])
+}
+
+resource "aws_secretsmanager_secret_version" "admin-pass-val" {
+  secret_id     = aws_secretsmanager_secret.admin-pass.id
+  secret_string = random_password.AdminPassword.result
+}
+resource "aws_secretsmanager_secret" "root-pass" {
+  name = join("/",[var.sc_environment,"vropsRootCred",var.pod_fqdn_name])
+}
+
+resource "aws_secretsmanager_secret_version" "root-pass-val" {
+  secret_id     = aws_secretsmanager_secret.root-pass.id
+  secret_string = random_password.RootPassword.result
+}
 resource "aws_instance" "vrops-node" {
       count                   = var.node_count
       ami                     = var.ami_id
@@ -171,7 +204,7 @@ resource "aws_instance" "vrops-node" {
       vpc_security_group_ids  = [aws_security_group.vrops-sg.id]
       iam_instance_profile    = "vrops.app.profile"
       key_name                = var.ssh_key_name
-      user_data               = templatefile("${path.module}/scripts/cloudInit.sh", {admin_password=var.admin_password,url=var.ssmagenturl,file_path=var.ssmfilepath,ami_buildtype=data.aws_ami.vrops_ami.tags.BuildType,ami_changelist=data.aws_ami.vrops_ami.tags.Changelist,cp_bucket_base_url=var.cp_bucket_base_url,csp_ref_link=var.csp_ref_link,sre_org_id=var.sre_org_id,base_url=var.base_url,pendo_key=data.aws_secretsmanager_secret_version.pendo_value.secret_string,license_key=var.vra_license_key,seshost=var.seshost,sesusername=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).username,sespassword=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).password,vrli_hostname=var.vrli_hostname,aws_env=var.env,node_type=var.cluster_size,csp_url=var.csp_url,srehub_refreshtoken=var.srehub_refreshtoken,orgId=var.sre_org_id,scurl=var.sc_customer_url})
+      user_data               = templatefile("${path.module}/scripts/cloudInit.sh", {root_password=random_password.RootPassword.result,admin_password=random_password.AdminPassword.result,url=var.ssmagenturl,file_path=var.ssmfilepath,ami_buildtype=data.aws_ami.vrops_ami.tags.BuildType,ami_changelist=data.aws_ami.vrops_ami.tags.Changelist,cp_bucket_base_url=var.cp_bucket_base_url,csp_ref_link=var.csp_ref_link,sre_org_id=var.sre_org_id,base_url=var.base_url,pendo_key=data.aws_secretsmanager_secret_version.pendo_value.secret_string,license_key=var.vra_license_key,seshost=var.seshost,sesusername=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).username,sespassword=jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).password,vrli_hostname=var.vrli_hostname,aws_env=var.env,node_type=var.cluster_size,csp_url=var.csp_url,srehub_refreshtoken=var.srehub_refreshtoken,orgId=var.sre_org_id,scurl=var.sc_customer_url})
 
       ebs_block_device {
         device_name = "/dev/sdb"
