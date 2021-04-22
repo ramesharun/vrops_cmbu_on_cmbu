@@ -2,9 +2,15 @@ variable "env" {
   type = string
   default="dev"
 }
-variable "ami_id" {                   
-  type = string
+variable "ami_id" {
+  type        = string
+  description = "The id of the machine image (AMI) to use for the server."
   default="ami-0d519fd2bc20076b8"
+
+  validation {
+    condition     = length(var.ami_id) > 4 && substr(var.ami_id, 0, 4) == "ami-"
+    error_message = "The image_id value must be a valid AMI id, starting with \"ami-\"."
+  }
 }
 variable "cluster_size" {              
   type = string
@@ -28,8 +34,7 @@ variable "node_count" {
 }
 variable "sc_environment" {            
   type    = string
-  default = "sc_env"
-
+  default = "vrops-padev-local"
 }
 variable "pool_instance_id" {             
   type    = string
@@ -41,11 +46,7 @@ variable "resource_id" {
   default = "sc_env"
 
 }
-variable "admin_password" {             
-  type    = string
-  default = "Admin@123"
 
-}
 variable "availability_zones" {            
   type    = string
   default = "us-west-2a"
