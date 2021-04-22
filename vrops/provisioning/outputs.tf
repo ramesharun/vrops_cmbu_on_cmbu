@@ -1,32 +1,6 @@
-# Security Group Outputs 
-
-output "sg_id" {
-  description = "sg_id"
-  value   = aws_security_group.vrops-sg.id
-}
-output "sg_arn" {
-  description = "sg_arn"
-  value   = aws_security_group.vrops-sg.arn
-}
 output "sg_name" {
   description = "sg_name"
   value   = aws_security_group.vrops-sg.name
-}
-output "sg_vpc_id" {
-  description = "sg_vpc_id"
-  value   = aws_security_group.vrops-sg.vpc_id
-}
-output "sg_owner_id" {
-  description = "sg_owner_id"
-  value   = aws_security_group.vrops-sg.owner_id
-}
-output "sg_description" {
-  description = "sg_description"
-  value   = aws_security_group.vrops-sg.description
-}
-output "sg_revoke_rules_on_delete" {
-  description = "sg_revoke_rules_on_delete"
-  value   = aws_security_group.vrops-sg.revoke_rules_on_delete
 }
 output "aws_instances_id" {
    description = "AWS instance ids provisioned"
@@ -36,42 +10,11 @@ output "aws_instances_private_ips" {
    description = "AWS instance ids provisioned"
    value   = tolist(aws_instance.vrops-node.*.private_ip)
 }
-output "aws_az_subnet_id" {
-   value = element(tolist(data.aws_subnet_ids.az_subnets.ids),0)
-}
-output "aws_all_subnet_id" {
-   value = tolist(data.aws_subnet_ids.all_subnets.ids)
-}
+
 output "elb_dns_name" {
-   value = aws_elb.vrops_elb.dns_name
+    value = aws_elb.vrops_elb.dns_name
 }
+
 output "elb_zone_id" {
    value = aws_elb.vrops_elb.zone_id
-}
-output "vrops_zone_id"{
-   value = data.aws_route53_zone.vrops.id
-}
-output "ami_id_name" {
-   value = data.aws_ami.vrops_ami.name
-}
-output "ami_id_ownerid" {
-   value = data.aws_ami.vrops_ami.owner_id
-}
-output "changelist_from_ami" {
-   value = data.aws_ami.vrops_ami.tags.Changelist
-}
-output "buildtype_from_ami" {
-   value = data.aws_ami.vrops_ami.tags.BuildType
-}
-output "pendokey" {
-   value = data.aws_secretsmanager_secret.pendo_key.id
-}
-output "pendovalue" {
-   value = data.aws_secretsmanager_secret_version.pendo_value.secret_string
-}
-output "sesusername" {
-   value = jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).username
-}
-output "sespassword" {
-   value = jsondecode(data.aws_secretsmanager_secret_version.ses_username.secret_string).password
 }
