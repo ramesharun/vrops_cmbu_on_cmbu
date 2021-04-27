@@ -181,7 +181,7 @@ resource "random_password" "RootPassword" {
 }
 
 resource "aws_secretsmanager_secret" "admin-pass" {
-  name = join("/",[var.sc_environment,"vropsAdminCred",var.pod_fqdn_name])
+  name = join("/",["/vrops",var.sc_environment,"vropsAdminCred",var.pod_fqdn_name])
 }
 
 resource "aws_secretsmanager_secret_version" "admin-pass-val" {
@@ -189,7 +189,7 @@ resource "aws_secretsmanager_secret_version" "admin-pass-val" {
   secret_string = random_password.AdminPassword.result
 }
 resource "aws_secretsmanager_secret" "root-pass" {
-  name = join("/",[var.sc_environment,"vropsRootCred",var.pod_fqdn_name])
+  name = join("/",["/vrops",var.sc_environment,"vropsRootCred",var.pod_fqdn_name])
 }
 
 resource "aws_secretsmanager_secret_version" "root-pass-val" {
